@@ -4,17 +4,17 @@
 var http = require('http');
 var bucket = {};
 
+var CLEANING_INTERVAL = 1000 * 30;
 var TIMEOUT = 1000 * 60 * 5;
+
 var PEERS_FROM_RANGE = 3;
 var TOTAL_PEERS = 6;
 
 var peers_available = 0;
 
-
 setInterval(function() {
     for(var a in bucket) {
         for(var b in bucket[a]) {
-            console.log(bucket[a][b]);
             if(bucket[a][b].ts + TIMEOUT < Date.now()) {
                 console.log('removing ' + bucket[a][b].ip);
                 delete bucket[a][b];
@@ -26,34 +26,17 @@ setInterval(function() {
 
 
 var getRandomItem = function(list) {
-    if(Array.isArray(list)) {
-        return list[Math.floor(Math.random() * list.length)];
-    } else {
-        console.log(list);
-        var keys = Object.keys(list);
-        return list[keys[Math.floor(Math.random() * keys.length)]];
-    }
+    var keys = Object.keys(list);
+    return list[keys[Math.floor(Math.random() * keys.length)]];
 }
 
 var addRandomPeers = function(set, bucket, num) {
-    if(Array.isArray(bucket)) {
-        while(set.length < num) {
-            var x = getRandomItem(bucket);
+    while(set.length < num) {
+        var x = getRandomItem(bucket);
+        var y = getRandomItem(x);
 
-            if(set.indexOf(x) < 0) {
-                set.push(x);
-            }
-        }
-    } else {
-        // don't even think about calling addRandomPeers here instead
-        // infini loop of death will haunt you
-        while(set.length < num) {
-            var x = getRandomItem(bucket);
-            var y = getRandomItem(x);
-
-            if(set.indexOf(y) < 0) {
-                set.push(y);
-            }
+        if(set.indexOf(y) < 0) {
+            set.push(y);
         }
     }
 
@@ -71,7 +54,6 @@ http.createServer(function(req, res) {
 
         if(range in bucket) {
             var peers_from_range = Math.min(bucket[range].length, PEERS_FROM_RANGE);
-
             set = addRandomPeers([], bucket[range], peers_from_range);
         }
 
@@ -90,13 +72,20 @@ http.createServer(function(req, res) {
             }
         }).on('end', function() {
             var reply;
+            var json;
+
+            var reply = {};
 
             try {
-                var json = JSON.parse(body);
+                json = JSON.parse(body);
+            } catch(SyntaxError) {
+                reply = {'error': 'not json'};
+            }
 
+            if(json && 'port' in json && 'key' in json) {
                 if(!(range in bucket)) {
                     console.log('creating bucket: ' + range);
-                    bucket[range] = [];
+                    bucket[range] = {};
                 }
 
                 if(!(host in bucket[range])) {
@@ -114,7 +103,7 @@ http.createServer(function(req, res) {
                 }
 
                 reply = {'status': 'success'};
-            } catch(SyntaxError) {
+            } else {
                 reply = {'error': 'invalid json'};
             }
 
