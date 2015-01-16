@@ -3,10 +3,18 @@ Nightfall
 
 cjdns inet auto-peering tracker
 
+While hyperboria was originally designed as friend2friend network, we've decided to allow anonymous peering with the network, too.
+
+It's now possible to have zero-conf hyperboria access even if don't have peers for ethernet auto-peering. To do this, you're connecting to one of the known trackers and ask them for open routers. The tracker will give you some routers near you (if there are any) and some random routers. That's it, you're done.
+
+If you want to help users connect to the network you can announce yourself as open router and people will receive your connection details from the tracker. You don't need a static IP, but you need to be able to receive inbound connections.
+
+The client site implementation will be available in the future in [yrd](https://github.com/kpcyrd/yrd)
+
 Random Trivia
 -------------
 
-On hyperboria it's common knowledge only to peer with trusted friends. The name is a reference to one night stands, a trust relationship of people hardly knowing each other for the purpose of not being alone.
+On hyperboria it's common knowledge only to peer with trusted friends. The name is a reference to one night stands, a trust relationship of people hardly knowing each other for the sole purpose of not being alone.
 
 The port number 7473 is RISE typed into a cellphone.
 
