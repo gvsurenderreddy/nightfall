@@ -14,7 +14,7 @@ The client site implementation will be available in the future in [yrd](https://
 Random Trivia
 -------------
 
-On hyperboria it's common knowledge only to peer with trusted friends. The name is a reference to one night stands, a trust relationship of people hardly knowing each other for the sole purpose of not being alone.
+On hyperboria it's common knowledge only to peer with trusted friends. The name nightfall is a reference to one night stands, a trust relationship between people hardly knowing each other for the sole purpose of not being alone.
 
 The port number 7473 is RISE typed into a cellphone.
 
