@@ -82,7 +82,7 @@ http.createServer(function(req, res) {
                 reply = {'error': 'not json'};
             }
 
-            if(json && !('ts' in json)) {
+            if(json && !('ip' in json || 'ts' in json)) {
                 if(!(range in bucket)) {
                     console.log('creating bucket: ' + range);
                     bucket[range] = {};
