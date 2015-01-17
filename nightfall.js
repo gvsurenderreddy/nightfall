@@ -67,7 +67,7 @@ http.createServer(function(req, res) {
         req.on('data', function(data) {
             body += data;
 
-            if(body.length > 1e6) {
+            if(body.length > 1e3) {
                 req.connection.destroy();
             }
         }).on('end', function() {
