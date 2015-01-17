@@ -9,7 +9,7 @@ It's now possible to have zero-conf hyperboria access even if you don't have pee
 
 If you want to help users connect to the network you can announce yourself as open router and people will receive your connection details from the tracker. You don't need a static IP, but you need to be able to receive inbound connections.
 
-The client site implementation will be available in the future in [yrd](https://github.com/kpcyrd/yrd)
+The client site implementation is available in [yrd](https://github.com/kpcyrd/yrd)
 
 Random Trivia
 -------------
