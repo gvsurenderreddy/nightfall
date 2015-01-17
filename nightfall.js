@@ -82,23 +82,34 @@ http.createServer(function(req, res) {
                 reply = {'error': 'not json'};
             }
 
-            if(json && 'port' in json && 'key' in json) {
+            if(json && !('ts' in json)) {
                 if(!(range in bucket)) {
                     console.log('creating bucket: ' + range);
                     bucket[range] = {};
                 }
 
                 if(!(host in bucket[range])) {
-                    console.log('inserting host into bucket:' + ip);
-                    bucket[range][host] = {
+                    console.log('inserting host into bucket: ' + ip);
+
+                    var peer = {
                         'ip': ip.join('.'),
-                        'port': json['port'],
-                        'key': json['key'],
                         'ts': Date.now()
                     };
+
+                    for(var key in json) {
+                        peer[key] = json[key];
+                    }
+
+                    bucket[range][host] = peer;
+
                     peers_available++;
                 } else {
                     console.log('reset expiration for: ' + ip);
+
+                    for(var key in json) {
+                        bucket[range][host][key] = json[key];
+                    }
+
                     bucket[range][host].ts = Date.now();
                 }
 
