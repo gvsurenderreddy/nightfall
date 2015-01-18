@@ -15,10 +15,12 @@ var peers_available = 0;
 setInterval(function() {
     for(var a in bucket) {
         for(var b in bucket[a]) {
-            if(bucket[a][b].ts + TIMEOUT < Date.now()) {
-                console.log('removing ' + bucket[a][b].ip);
-                delete bucket[a][b];
-                peers_available--;
+            for(var c in bucket[a][b]) {
+                if(bucket[a][b][c].ts + TIMEOUT < Date.now()) {
+                    console.log('removing ' + bucket[a][b][c].ip);
+                    delete bucket[a][b][c];
+                    peers_available--;
+                }
             }
         }
     }
@@ -46,22 +48,28 @@ var addRandomPeers = function(set, bucket, num) {
 http.createServer(function(req, res) {
     var ip = req.connection.remoteAddress.split('.');
 
+    var chunks = req.url.split('/');
+    var topic = chunks[1];
+    var action = chunks[2];
+
     var range = ip[0] + '.' + ip[1];
     var host = ip[2] + '.' + ip[3];
 
-    if(req.url == '/seek') {
+    if(action == 'seek') {
         var set = [];
 
-        if(range in bucket) {
-            var peers_from_range = Math.min(bucket[range].length, PEERS_FROM_RANGE);
-            set = addRandomPeers([], bucket[range], peers_from_range);
+        if(topic in bucket) {
+            if(range in bucket[topic]) {
+                var peers_from_range = Math.min(bucket[topic][range].length, PEERS_FROM_RANGE);
+                set = addRandomPeers([], bucket[topic][range], peers_from_range);
+            }
+
+            var total_peers = Math.min(peers_available, TOTAL_PEERS);
+            set = addRandomPeers(set, bucket[topic], total_peers);
         }
 
-        var total_peers = Math.min(peers_available, TOTAL_PEERS);
-        set = addRandomPeers(set, bucket, total_peers);
-
         res.end(JSON.stringify(set) + '\n');
-    } else if(req.url == '/have') {
+    } else if(action == 'have') {
         var body = '';
 
         req.on('data', function(data) {
@@ -83,13 +91,18 @@ http.createServer(function(req, res) {
             }
 
             if(json && !('ip' in json || 'ts' in json)) {
-                if(!(range in bucket)) {
-                    console.log('creating bucket: ' + range);
-                    bucket[range] = {};
+                if(!(topic in bucket)) {
+                    console.log('creating bucket[%s]', topic);
+                    bucket[topic] = {};
                 }
 
-                if(!(host in bucket[range])) {
-                    console.log('inserting host into bucket: ' + ip);
+                if(!(range in bucket[topic])) {
+                    console.log('creating bucket[%s][%s]', topic, range);
+                    bucket[topic][range] = {};
+                }
+
+                if(!(host in bucket[topic][range])) {
+                    console.log('inserting host into bucket[%s]: ' + ip, topic);
 
                     var peer = {
                         'ip': ip.join('.'),
@@ -100,17 +113,17 @@ http.createServer(function(req, res) {
                         peer[key] = json[key];
                     }
 
-                    bucket[range][host] = peer;
+                    bucket[topic][range][host] = peer;
 
                     peers_available++;
                 } else {
                     console.log('reset expiration for: ' + ip);
 
                     for(var key in json) {
-                        bucket[range][host][key] = json[key];
+                        bucket[topic][range][host][key] = json[key];
                     }
 
-                    bucket[range][host].ts = Date.now();
+                    bucket[topic][range][host].ts = Date.now();
                 }
 
                 reply = {'status': 'success'};
