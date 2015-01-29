@@ -1,0 +1,12 @@
+[Unit]
+Description=Cjdns inet auto-peering tracker
+After=network.target
+
+[Service]
+User=nightfall
+Group=nightfall
+ExecStart=/usr/bin/nightfall
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
