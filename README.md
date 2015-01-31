@@ -11,6 +11,14 @@ If you want to help users connect to the network you can announce yourself as op
 
 The client site implementation is available in [yrd](https://github.com/kpcyrd/yrd)
 
+Trackers
+--------
+
+```
+http://nf.rxv.cc:7473/promisc/seek/         # maintained by kpcyrd
+http://darkcloud.ca:7473/promisc/seek/      # maintained by prurigro
+```
+
 Random Trivia
 -------------
 
