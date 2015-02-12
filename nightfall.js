@@ -60,7 +60,7 @@ var addRandomPeers=nightfall.addRandomPeers=function(set,bucket,num){
   return set;
 };
 
-var main=function(req,res,next){
+var main=nightfall.main=function(req,res,next){
   next=next||function(result){
     result=result||motto;
     res.setHeader('Content-Type','text/plain');
