@@ -12,9 +12,6 @@ var PEERS_FROM_RANGE = nightfall.PEERS_FROM_RANGE = 3;
 // keep six peers by default
 var TOTAL_PEERS = nightfall.TOTAL_PEERS = 6;
 
-// track the number of available peers
-var peers_available = nightfall.peers_available = 0;
-
 // if used as a plugin, you'll need another 
 var prefix = nightfall.prefix = '/nightfall';
 
@@ -34,7 +31,7 @@ var backgroundRoutine = nightfall.backgroundRoutine = function(frequency) {
           if(bucket[a][b][c].ts + TIMEOUT < Date.now()) {
             console.log('removing ' + bucket[a][b][c].ip);
             delete bucket[a][b][c];
-            peers_available--;
+            bucket[a].num--;
           }
         }
       }
@@ -91,7 +88,7 @@ var main = nightfall.main = function(req, res, next) {
         var peers_from_range = Math.min(bucket[topic][range].length, PEERS_FROM_RANGE);
         set = addRandomPeers([],bucket[topic][range], peers_from_range);
       }
-      var total_peers = Math.min(peers_available, TOTAL_PEERS);
+      var total_peers = Math.min(bucket[topic].num, TOTAL_PEERS);
       set = addRandomPeers(set, bucket[topic], total_peers);
     }
     res.end(JSON.stringify(set) + '\n');
@@ -116,6 +113,7 @@ var main = nightfall.main = function(req, res, next) {
         if(!(topic in bucket)) {
           console.log('creating bucket[%s]', topic);
           bucket[topic] = {};
+          bucket[topic].num = 0;
         }
         if(!(range in bucket[topic])) {
           console.log('creating bucket[%s][%s]', topic, range);
@@ -131,7 +129,7 @@ var main = nightfall.main = function(req, res, next) {
             peer[key] = json[key];
           }
           bucket[topic][range][host] = peer;
-          peers_available++;
+          bucket[topic].num++;
         } else {
           console.log('reset expiration for: ' + ip);
           for(var key in json) {
