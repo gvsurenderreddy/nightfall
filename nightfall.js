@@ -24,7 +24,7 @@ which the final victory of the
 revolution will be built.
 */}.toString().slice(15, -3);
 
-/* Do this every three seconds */
+/* Remove old peers every three seconds */
 var backgroundRoutine = nightfall.backgroundRoutine = function(frequency) {
   frequency = frequency || 3000;
   setInterval(function() {
@@ -42,13 +42,13 @@ var backgroundRoutine = nightfall.backgroundRoutine = function(frequency) {
   }, frequency);
 };
 
-/* */
+/* Get a random item from a list */
 var getRandomItem = nightfall.getRandomItem = function(list) {
   var keys = Object.keys(list);
   return list[keys[Math.floor(Math.random() * keys.length)]];
 };
 
-/* */
+/* Add random items from a bucket to a set */
 var addRandomPeers = nightfall.addRandomPeers = function(set, bucket, num) {
   while(set.length < num) {
     var x = getRandomItem(bucket);
