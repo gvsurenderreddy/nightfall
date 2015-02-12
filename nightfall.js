@@ -22,7 +22,7 @@ var motto = nightfall.motto = function() {/*The masses are the decisive
 element, they are the rock on
 which the final victory of the
 revolution will be built.
-*/}.toString().slice(14, -3);
+*/}.toString().slice(15, -3);
 
 /* Do this every three seconds */
 var backgroundRoutine = nightfall.backgroundRoutine = function(frequency) {
