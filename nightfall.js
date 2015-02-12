@@ -92,6 +92,8 @@ var main = nightfall.main = function(req, res, next) {
       set = addRandomPeers(set, bucket[topic], total_peers);
     }
     res.end(JSON.stringify(set) + '\n');
+  } else if(action === 'dump') {
+    res.end(JSON.stringify(bucket[topic]) + '\n');
   } else if(action === 'have') {
     var body = '';
 
