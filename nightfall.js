@@ -111,7 +111,7 @@ var main = nightfall.main = function(req, res, next) {
         reply = {'error': 'not json'};
       }
 
-      if(json && !('ip' in json || 'ts' in json)) {
+      if(json && !('ip' in json || 'ts' in json) && typeof json.port === 'number' && typeof json.password === 'string' && typeof json.publicKey === 'string') {
         if(!(topic in bucket)) {
           console.log('creating bucket[%s]', topic);
           bucket[topic] = {};
