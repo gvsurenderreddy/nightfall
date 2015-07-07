@@ -1,16 +1,12 @@
+#!/usr/bin/env js
+'use strict';
+
 var nightfall = {};
 
-// keep your peers in a bucket
-var bucket = nightfall.bucket = {};
 // clean up every x seconds
 var CLEANING_INTERVAL = nightfall.CLEANING_INTERVAL = 1000 * 30;
 // time out every x seconds
 var TIMEOUT = nightfall.TIMEOUT = 1000 * 60 * 5;
-
-// return x peers within the same range
-var PEERS_FROM_RANGE = nightfall.PEERS_FROM_RANGE = 3;
-// return x peers in total
-var TOTAL_PEERS = nightfall.TOTAL_PEERS = 6;
 
 // if used as a plugin, you'll need another 
 var prefix = nightfall.prefix = '/nightfall';
@@ -21,41 +17,14 @@ which the final victory of the
 revolution will be built.
 */}.toString().slice(15, -3);
 
-/* Remove old peers that stopped pinging us */
-var backgroundRoutine = nightfall.backgroundRoutine = function(frequency) {
-    frequency = frequency || 3000;
-    setInterval(function() {
-        for(var a in bucket) {
-            for(var b in bucket[a]) {
-                for(var c in bucket[a][b]) {
-                    if(bucket[a][b][c].ts + TIMEOUT < Date.now()) {
-                        console.log('removing ' + bucket[a][b][c].ip);
-                        delete bucket[a][b][c];
-                        bucket[a].num--;
-                    }
-                }
-            }
-        }
-    }, frequency);
+var jsonify = function(x) {
+    return JSON.stringify(x) + '\n';
 };
 
-/* Get a random item from a list */
-var getRandomItem = nightfall.getRandomItem = function(list) {
-    var keys = Object.keys(list);
-    return list[keys[Math.floor(Math.random() * keys.length)]];
-};
-
-/* Add random items from a bucket to a set */
-var addRandomPeers = nightfall.addRandomPeers = function(set, bucket, num) {
-    while(set.length < num) {
-        var x = getRandomItem(bucket);
-        var y = getRandomItem(x);
-        if(set.indexOf(y) < 0) {
-            set.push(y);
-        }
-    }
-    return set;
-};
+var Engine = (function(mode) {
+    return require('./memory');
+})(process.argv.slice(-1));
+var storage = new Engine();
 
 var main = nightfall.main = function(req, res, next) {
     next = next || function(result) {
@@ -65,35 +34,28 @@ var main = nightfall.main = function(req, res, next) {
     };
 
     // let's not assume we'll only receive an ipv4
-    var IP = req.connection.remoteAddress;
-    var ip;
-    if(/^\d{0,3}\.\d{0,3}\.\d{0,3}\.\d{0,3}$/.test(IP)) {
-        ip = IP.split('.');
-    } else { // it must be an ipv6
-        next('This service is meant to connect users via their ipv4 addresses.');
+    var ip = req.connection.remoteAddress;
+    if(!/^\d{0,3}\.\d{0,3}\.\d{0,3}\.\d{0,3}$/.test(ip)) {
+        // it must be an ipv6
+        return next('This service is meant to connect users via their ipv4 addresses.');
     }
 
     var url = req.url.replace(prefix, ''); // strip out the prefix
     var chunks = url.split('/'); // break the url into its components
     var topic = chunks[1];
     var action = chunks[2];
+    var modifier = chunks[3];
 
-    var range = ip[0] + '.' + ip[1];
-    var host = ip[2] + '.' + ip[3];
-
-    if(action == 'seek') {
-        var set = [];
-        if(topic in bucket) {
-            if(range in bucket[topic]) {
-                var peers_from_range = Math.min(bucket[topic][range].length, PEERS_FROM_RANGE);
-                set = addRandomPeers([],bucket[topic][range], peers_from_range);
-            }
-            var total_peers = Math.min(bucket[topic].num, TOTAL_PEERS);
-            set = addRandomPeers(set, bucket[topic], total_peers);
+    if(action === 'seek') {
+        if(modifier !== 'nearby') {
+            modifier = 'any';
         }
-        res.end(JSON.stringify(set) + '\n');
-    } else if(action === 'dump') {
-        res.end(JSON.stringify(bucket[topic]) + '\n');
+
+        storage.connect(function(s) {
+            s[modifier](topic, ip, function(peers) {
+                res.end(jsonify(peers));
+            });
+        });
     } else if(action === 'have') {
         var body = '';
 
@@ -105,45 +67,32 @@ var main = nightfall.main = function(req, res, next) {
         }).on('end', function() {
             var reply = {};
             var json;
+
             try {
                 json = JSON.parse(body);
             } catch(SyntaxError) {
                 reply = {'error': 'not json'};
             }
 
-            if(json && !('ip' in json || 'ts' in json) && typeof json.port === 'number' && typeof json.password === 'string' && typeof json.publicKey === 'string') {
-                if(!(topic in bucket)) {
-                    console.log('creating bucket[%s]', topic);
-                    bucket[topic] = {};
-                    bucket[topic].num = 0;
-                }
-                if(!(range in bucket[topic])) {
-                    console.log('creating bucket[%s][%s]', topic, range);
-                    bucket[topic][range] = {};
-                }
-                if(!(host in bucket[topic][range])) {
-                    console.log('inserting host into bucket[%s]: ' + ip, topic);
-                    var peer = {
-                        'ip': ip.join('.'),
-                        'ts': Date.now()
-                    };
-                    for(var key in json) {
-                        peer[key] = json[key];
-                    }
-                    bucket[topic][range][host] = peer;
-                    bucket[topic].num++;
+            storage.connect(function(s) {
+                if(json &&
+                    !('ip' in json || 'ts' in json) &&
+                    typeof json.port === 'number' &&
+                    typeof json.password === 'string' &&
+                    typeof json.publicKey === 'string'
+                ) {
+                    json.ip = ip;
+                    json.ts = Date.now();
+
+                    s.add(topic, ip, json, TIMEOUT);
+
+                    reply = {'status': 'success'};
                 } else {
-                    console.log('reset expiration for: ' + ip);
-                    for(var key in json) {
-                        bucket[topic][range][host][key] = json[key];
-                    }
-                    bucket[topic][range][host].ts = Date.now();
+                    reply = {'error': 'invalid json'};
                 }
-                reply = {'status': 'success'};
-            } else {
-                reply = {'error': 'invalid json'};
-            }
-            res.end(JSON.stringify(reply) + '\n');
+
+                res.end(jsonify(reply));
+            });
         });
     } else {
         next(); // default message is the 'motto', declared at the top
@@ -152,8 +101,7 @@ var main = nightfall.main = function(req, res, next) {
 
 /* If this is being called as a standalone server */
 if(require.main === module) {
-    /* start the background process */
-    backgroundRoutine();
+    storage.background(CLEANING_INTERVAL, TIMEOUT);
 
     /* launch the server */
     require('http').createServer(main).listen(7473, '', function() {
