@@ -22,6 +22,10 @@ var jsonify = function(x) {
 };
 
 var Engine = (function(mode) {
+    if(mode === 'redis') {
+        return require('./redis');
+    }
+
     return require('./memory');
 })(process.argv.slice(-1));
 var storage = new Engine();
