@@ -2,14 +2,14 @@ var nightfall = {};
 
 // keep your peers in a bucket
 var bucket = nightfall.bucket = {};
-// clean up every thirty seconds
+// clean up every x seconds
 var CLEANING_INTERVAL = nightfall.CLEANING_INTERVAL = 1000 * 30;
-// time out every five minutes
+// time out every x seconds
 var TIMEOUT = nightfall.TIMEOUT = 1000 * 60 * 5;
 
-// 3 peers within a particular range
+// return x peers within the same range
 var PEERS_FROM_RANGE = nightfall.PEERS_FROM_RANGE = 3;
-// keep six peers by default
+// return x peers in total
 var TOTAL_PEERS = nightfall.TOTAL_PEERS = 6;
 
 // if used as a plugin, you'll need another 
@@ -21,7 +21,7 @@ which the final victory of the
 revolution will be built.
 */}.toString().slice(15, -3);
 
-/* Remove old peers every three seconds */
+/* Remove old peers that stopped pinging us */
 var backgroundRoutine = nightfall.backgroundRoutine = function(frequency) {
     frequency = frequency || 3000;
     setInterval(function() {
