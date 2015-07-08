@@ -22,7 +22,6 @@ module.exports = function() {
                     for(var b in bucket[a]) {
                         for(var c in bucket[a][b]) {
                             if(bucket[a][b][c].ts + ttl < Date.now()) {
-                                console.log('removing ' + bucket[a][b][c].ip);
                                 bucket[a][b].splice(c, 1);
                             }
                         }
