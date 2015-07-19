@@ -27,7 +27,7 @@ var Engine = (function(mode) {
     }
 
     return require('./memory');
-})(process.argv.slice(-1));
+})(process.argv.slice(-1)[0]);
 var storage = new Engine();
 
 var main = nightfall.main = function(req, res, next) {
