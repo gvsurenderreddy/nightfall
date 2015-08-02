@@ -55,6 +55,10 @@ var Client = function(client) {
                 cb(peers);
             });
         },
+
+        quit: function() {
+            client.quit();
+        },
     };
 };
 

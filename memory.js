@@ -68,6 +68,10 @@ module.exports = function() {
 
             cb(peers);
         },
+
+        quit: function() {
+
+        },
     };
 
     return that;

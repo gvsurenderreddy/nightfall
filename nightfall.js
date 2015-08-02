@@ -57,6 +57,7 @@ var main = nightfall.main = function(req, res, next) {
 
         storage.connect(function(s) {
             s[modifier](topic, ip, function(peers) {
+                s.quit();
                 res.end(jsonify(peers));
             });
         });
@@ -95,6 +96,7 @@ var main = nightfall.main = function(req, res, next) {
                     reply = {'error': 'invalid json'};
                 }
 
+                s.quit();
                 res.end(jsonify(reply));
             });
         });
